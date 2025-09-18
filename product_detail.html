@@ -1,0 +1,135 @@
+{% extends "shop/base.html" %} {% block title %}{{ product.name }} - FootwearShop{% endblock %} {% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'shop:home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'shop:product_list' %}">Products</a></li>
+            <li class="breadcrumb-item"><a href="{{ product.category.get_absolute_url }}">{{ product.category.name }}</a></li>
+            <li class="breadcrumb-item active">{{ product.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-lg-6">
+            <!-- Product Image -->
+            <div class="card border-0">
+                {% if product.image %}
+                <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}" style="height: 500px; object-fit: cover;"> {% else %}
+                <div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height: 500px;">
+                    <i class="fas fa-shoe-prints fa-5x text-muted"></i>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Additional Images -->
+            {% if product.images.all %}
+            <div class="row mt-3">
+                {% for image in product.images.all %}
+                <div class="col-3">
+                    <img src="{{ image.image.url }}" class="img-fluid rounded" alt="{{ image.alt_text }}">
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-6">
+            <div class="ps-lg-4">
+                <!-- Product Info -->
+                <h1 class="h2">{{ product.name }}</h1>
+                <p class="text-muted mb-3">by {{ product.brand.name }}</p>
+
+                <!-- Price -->
+                <div class="mb-4">
+                    {% if product.discount_price %}
+                    <span class="h3 text-primary me-3">${{ product.discount_price }}</span>
+                    <span class="h5 text-muted text-decoration-line-through">${{ product.price }}</span>
+                    <span class="badge bg-danger ms-2">Save {{ product.get_discount_percentage }}%</span> {% else %}
+                    <span class="h3 text-primary">${{ product.price }}</span> {% endif %}
+                </div>
+
+                <!-- Description -->
+                <div class="mb-4">
+                    <h5>Description</h5>
+                    <p>{{ product.description|default:"No description available." }}</p>
+                </div>
+
+                <!-- Product Details -->
+                <div class="mb-4">
+                    <div class="row">
+                        <div class="col-6">
+                            <strong>Category:</strong> {{ product.category.name }}
+                        </div>
+                        <div class="col-6">
+                            <strong>Gender:</strong> {{ product.get_gender_display }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stock Status -->
+                <div class="mb-4">
+                    {% if product.stock > 0 %}
+                    <span class="badge bg-success">
+                        <i class="fas fa-check-circle"></i> In Stock ({{ product.stock }} available)
+                    </span> {% else %}
+                    <span class="badge bg-danger">
+                        <i class="fas fa-times-circle"></i> Out of Stock
+                    </span> {% endif %}
+                </div>
+
+                <!-- Add to Cart Form -->
+                {% if user.is_authenticated and product.stock > 0 %}
+                <form action="{% url 'shop:cart_add' product.id %}" method="post" class="mb-4">
+                    {% csrf_token %}
+
+                    <!-- Size Selection -->
+                    <div class="mb-3">
+                        <label for="size" class="form-label">Size</label>
+                        <select name="size" id="size" class="form-select" required>
+                            <option value="">Select Size</option>
+                            {% for size in product.sizes.all %}
+                            {% if size.stock > 0 %}
+                            <option value="{{ size.size }}">{{ size.size }} ({{ size.stock }} available)</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Quantity -->
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Quantity</label>
+                        <select name="quantity" id="quantity" class="form-select">
+                            {% for i in "123456789"|make_list %}
+                            <option value="{{ i }}">{{ i }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                        <i class="fas fa-cart-plus"></i> Add to Cart
+                    </button>
+                </form>
+                {% elif not user.is_authenticated %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> Please <a href="/admin/login/">login</a> to add items to cart.
+                </div>
+                {% endif %}
+
+                <!-- Available Sizes -->
+                {% if product.sizes.all %}
+                <div class="mb-4">
+                    <h6>Available Sizes</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for size in product.sizes.all %}
+                        <span class="badge {% if size.stock > 0 %}bg-light text-dark{% else %}bg-secondary{% endif %} p-2">
+                            {{ size.size }}
+                            {% if size.stock == 0 %} (Out of Stock){% endif %}
+                        </span> {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

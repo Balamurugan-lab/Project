@@ -1,0 +1,120 @@
+{% extends "shop/base.html" %} {% block title %}My Orders - FootwearShop{% endblock %} {% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <h2><i class="fas fa-receipt"></i> My Orders</h2>
+            <hr>
+        </div>
+    </div>
+
+    {% if orders %}
+    <div class="row">
+        <div class="col-12">
+            {% for order in orders %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col-md-3">
+                            <strong>Order #{{ order.id }}</strong>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted">
+                                <i class="fas fa-calendar"></i> {{ order.created|date:"M d, Y" }}
+                            </small>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="badge 
+                                {% if order.status == 'pending' %}bg-warning{% endif %}
+                                {% if order.status == 'processing' %}bg-info{% endif %}
+                                {% if order.status == 'shipped' %}bg-primary{% endif %}
+                                {% if order.status == 'delivered' %}bg-success{% endif %}
+                                {% if order.status == 'cancelled' %}bg-danger{% endif %}
+                            ">
+                                {% if order.status == 'pending' %}<i class="fas fa-clock"></i>{% endif %}
+                                {% if order.status == 'processing' %}<i class="fas fa-cog"></i>{% endif %}
+                                {% if order.status == 'shipped' %}<i class="fas fa-truck"></i>{% endif %}
+                                {% if order.status == 'delivered' %}<i class="fas fa-check-circle"></i>{% endif %}
+                                {% if order.status == 'cancelled' %}<i class="fas fa-times-circle"></i>{% endif %}
+                                {{ order.get_status_display }}
+                            </span>
+                        </div>
+                        <div class="col-md-3 text-end">
+                            <strong class="text-primary">${{ order.total_cost }}</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="row">
+                                {% for item in order.items.all|slice:":3" %}
+                                <div class="col-md-4 mb-3">
+                                    <div class="d-flex align-items-center">
+                                        {% if item.product.image %}
+                                        <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="rounded me-3" style="width: 60px; height: 60px; object-fit: cover;"> {% else %}
+                                        <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                            <i class="fas fa-shoe-prints text-muted"></i>
+                                        </div>
+                                        {% endif %}
+                                        <div>
+                                            <h6 class="mb-0 small">{{ item.product.name }}</h6>
+                                            <small class="text-muted">Size {{ item.size }} × {{ item.quantity }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %} {% if order.items.count > 3 %}
+                                <div class="col-md-4 mb-3">
+                                    <div class="d-flex align-items-center justify-content-center h-100">
+                                        <span class="text-muted">+{{ order.items.count|add:"-3" }} more items</span>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="col-md-4 text-end">
+                            <div class="mb-2">
+                                <small class="text-muted">{{ order.items.count }} item{{ order.items.count|pluralize }}</small>
+                            </div>
+                            <div class="mb-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-map-marker-alt"></i> 
+                                    {{ order.city }}, {{ order.postal_code }}
+                                </small>
+                            </div>
+                            <a href="{% url 'shop:order_detail' order.id %}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye"></i> View Details
+                            </a>
+                            {% if order.status in 'pending processing' %}
+                            <form method="post" action="{% url 'shop:cancel_order' order.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure you want to cancel this order?');">
+        <i class="fas fa-times"></i> Cancel Order
+    </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% else %}
+    <div class="row">
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="fas fa-receipt fa-5x text-muted mb-4"></i>
+                <h3>No orders yet</h3>
+                <p class="text-muted mb-4">You haven't placed any orders yet. Start shopping to see your orders here!</p>
+                <a href="{% url 'shop:product_list' %}" class="btn btn-primary">
+                    <i class="fas fa-shopping-bag"></i> Start Shopping
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
